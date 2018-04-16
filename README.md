@@ -1,7 +1,9 @@
-# GMT EDD WP Rest API
-Add WP Rest API hooks into Easy Digital Downloads. Returns an array of purchase IDs.
+# GMT Mailchimp WP Rest API
+Add WP Rest API hooks for JS use of the Mailchimp API.
 
 ## How to use it
+
+THIS IS ALL WRONG!
 
 ### The Endpoint
 
