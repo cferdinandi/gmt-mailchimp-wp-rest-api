@@ -5,6 +5,15 @@
 		$options = mailchimp_rest_api_get_theme_options();
 		$params = $request->get_params();
 
+		// Check key/secret
+		if ( !empty($options['mailchimp_form_key']) && !empty($options['mailchimp_form_secret']) && (empty($params[$options['mailchimp_form_key']]) || $params[$options['mailchimp_form_key'] !== $options['mailchimp_form_secret']) ) {
+			return new WP_Error(400, array(
+				'code' => 400,
+				'status' => 'failed',
+				'message' => 'Unable to subscribe at this time. Please try again.'
+			));
+		}
+
 		// Check honeypot field
 		if ( !empty($options['mailchimp_honeypot']) && isset($params[$options['mailchimp_honeypot']]) && !empty($params[$options['mailchimp_honeypot']])  ) {
 			return new WP_Error(400, array(
