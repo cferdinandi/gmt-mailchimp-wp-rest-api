@@ -5,6 +5,18 @@
 		$options = mailchimp_rest_api_get_theme_options();
 		$params = $request->get_params();
 
+		// Check domain whitelist
+		if (!empty($options['origin'])) {
+			$origin = $request->get_header('origin');
+			if (empty($origin) || !in_array($origin, explode(',', $options['origin']))) {
+				return new WP_REST_Response(array(
+					'code' => 400,
+					'status' => 'disallowed_domain',
+					'message' => 'This domain is not whitelisted.'
+				), 400);
+			}
+		}
+
 		// Check key/secret
 		if ( !empty($options['mailchimp_form_key']) && !empty($options['mailchimp_form_secret']) && (!isset($params[$options['mailchimp_form_key']]) || empty($params[$options['mailchimp_form_key']]) || $params[$options['mailchimp_form_key']] !== $options['mailchimp_form_secret']) ) {
 			return new WP_REST_Response(array(

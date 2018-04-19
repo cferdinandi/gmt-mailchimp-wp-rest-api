@@ -61,6 +61,14 @@
 		<?php
 	}
 
+	function mailchimp_rest_api_settings_field_origin() {
+		$options = mailchimp_rest_api_get_theme_options();
+		?>
+		<input type="text" name="mailchimp_rest_api_theme_options[mailchimp_origin]" class="regular-text" id="mailchimp_rest_api_api_origin" value="<?php echo esc_attr( $options['mailchimp_origin'] ); ?>" />
+		<label class="description" for="mailchimp_rest_api_api_origin"><?php _e( 'Whitelisted domain origins for the API (optional, comma-separated)', 'mailchimp_rest_api' ); ?></label>
+		<?php
+	}
+
 
 
 	/**
@@ -78,6 +86,7 @@
 			'mailchimp_form_key' => '',
 			'mailchimp_form_secret' => '',
 			'mailchimp_honeypot' => '',
+			'mailchimp_origin' => '',
 		);
 
 		$defaults = apply_filters( 'mailchimp_rest_api_default_theme_options', $defaults );
@@ -106,6 +115,9 @@
 
 		if ( isset( $input['mailchimp_honeypot'] ) && ! empty( $input['mailchimp_honeypot'] ) )
 			$output['mailchimp_honeypot'] = wp_filter_nohtml_kses( $input['mailchimp_honeypot'] );
+
+		if ( isset( $input['mailchimp_origin'] ) && ! empty( $input['mailchimp_origin'] ) )
+			$output['mailchimp_origin'] = wp_filter_nohtml_kses( str_replace(' ', '', $input['mailchimp_origin']) );
 
 		return apply_filters( 'mailchimp_rest_api_theme_options_validate', $output, $input );
 	}
@@ -237,6 +249,7 @@
 		add_settings_field( 'key', __( 'Form Key', 'mailchimp_rest_api' ), 'mailchimp_rest_api_settings_field_key', 'mailchimp_rest_api_options', 'mailchimp_rest_api' );
 		add_settings_field( 'secret', __( 'Form Secret', 'mailchimp_rest_api' ), 'mailchimp_rest_api_settings_field_secret', 'mailchimp_rest_api_options', 'mailchimp_rest_api' );
 		add_settings_field( 'honeypot', __( 'Honeypot', 'mailchimp_rest_api' ), 'mailchimp_rest_api_settings_field_honeypot', 'mailchimp_rest_api_options', 'mailchimp_rest_api' );
+		add_settings_field( 'origin', __( 'Whitelisted Domains', 'mailchimp_rest_api' ), 'mailchimp_rest_api_settings_field_origin', 'mailchimp_rest_api_options', 'mailchimp_rest_api' );
 
 	}
 	add_action( 'admin_init', 'mailchimp_rest_api_theme_options_init' );
