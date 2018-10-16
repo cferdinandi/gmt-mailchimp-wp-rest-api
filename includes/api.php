@@ -94,12 +94,22 @@
 				),
 				'method' => 'PUT',
 				'body' => json_encode(array(
+					'status' => 'subscribed',
 					'merge_fields' => $merge_fields,
 					'interests' => $groups,
 				)),
 			);
 			$request = wp_remote_request( $url, $mc_params );
 			$response = wp_remote_retrieve_body( $request );
+
+			// If user had previously unsubscribed, throw an error
+			if ( array_key_exists( 'status', $data ) && $data['status'] === 400 ) {
+				return new WP_REST_Response(array(
+					'code' => 400,
+					'status' => 'unsubscribed',
+					'message' => 'You had previously unsubscribed and cannot be resubscribed using this form.'
+				), 200);
+			}
 
 			// If still pending, return "new" status again
 			if ( array_key_exists( 'status', $data ) && $data['status'] === 'pending' ) {
