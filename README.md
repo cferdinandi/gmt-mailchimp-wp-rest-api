@@ -59,6 +59,7 @@ var response = {
 | `400`  | `disallowed_domain` | This domain is not whitelisted.                                             |
 | `400`  | `failed`            | Unable to subscribe at this time. Please try again.                         |
 | `400`  | `failed`            | Please use a valid email address.                                           |
+| `400`  | `invalid_user`      | This subscriber does not exist.                                             |
 | `400`  | `unsubscribed`      | You had previously unsubscribed and cannot be resubscribed using this form. |
 | `200`  | `success`           | You're now subscribed.                                                      |
 | `200`  | `success`           | Your account has been updated.                                              |

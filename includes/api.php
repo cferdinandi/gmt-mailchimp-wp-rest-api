@@ -2,9 +2,9 @@
 
 	function gmt_mailchimp_wp_rest_api_subscribe_user($request) {
 
+		// Variables
 		$options = mailchimp_rest_api_get_theme_options();
 		$params = $request->get_params();
-		$no_not_create = !empty($params['do-not-create']);
 
 		// Check domain whitelist
 		if (!empty($options['origin'])) {
@@ -81,14 +81,14 @@
 		);
 
 		// Add subscriber
-		if ( !$do_not_create ) {
+		if ( !$params['do-not-create'] ) {
 			$request = wp_remote_post( $url, $mc_params );
 			$response = wp_remote_retrieve_body( $request );
 			$data = json_decode( $response, true );
 		}
 
 		// If subscriber already exists, update profile
-		if ( $do_not_create || ( array_key_exists( 'status', $data ) && $data['status'] === 400 && $data['title'] === 'Member Exists' ) ) {
+		if ( $params['do-not-create'] || ( array_key_exists( 'status', $data ) && $data['status'] === 400 && $data['title'] === 'Member Exists' ) ) {
 
 			$url .= '/' . md5( $params['email'] );
 			$mc_params = array(
@@ -104,14 +104,27 @@
 			);
 			$request = wp_remote_request( $url, $mc_params );
 			$response = wp_remote_retrieve_body( $request );
+			$data = json_decode( $response, true );
 
-			// If user had previously unsubscribed, throw an error
+			// If there's an error
 			if ( array_key_exists( 'status', $data ) && $data['status'] === 400 ) {
+
+				// If the user does not exist
+				if ( $params['do-not-create'] ) {
+					return new WP_REST_Response(array(
+						'code' => 400,
+						'status' => 'invalid_user',
+						'message' => 'This subscriber does not exist.'
+					), 400);
+				}
+
+				// If they're already unsubscribed
 				return new WP_REST_Response(array(
 					'code' => 400,
 					'status' => 'unsubscribed',
 					'message' => 'You had previously unsubscribed and cannot be resubscribed using this form.'
 				), 400);
+
 			}
 
 			// If still pending, return "new" status again
