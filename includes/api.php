@@ -4,6 +4,7 @@
 
 		$options = mailchimp_rest_api_get_theme_options();
 		$params = $request->get_params();
+		$no_not_create = !empty($params['do-not-create']);
 
 		// Check domain whitelist
 		if (!empty($options['origin'])) {
@@ -80,12 +81,14 @@
 		);
 
 		// Add subscriber
-		$request = wp_remote_post( $url, $mc_params );
-		$response = wp_remote_retrieve_body( $request );
-		$data = json_decode( $response, true );
+		if ( !$do_not_create ) {
+			$request = wp_remote_post( $url, $mc_params );
+			$response = wp_remote_retrieve_body( $request );
+			$data = json_decode( $response, true );
+		}
 
 		// If subscriber already exists, update profile
-		if ( array_key_exists( 'status', $data ) && $data['status'] === 400 && $data['title'] === 'Member Exists' ) {
+		if ( $do_not_create || ( array_key_exists( 'status', $data ) && $data['status'] === 400 && $data['title'] === 'Member Exists' ) ) {
 
 			$url .= '/' . md5( $params['email'] );
 			$mc_params = array(
@@ -108,7 +111,7 @@
 					'code' => 400,
 					'status' => 'unsubscribed',
 					'message' => 'You had previously unsubscribed and cannot be resubscribed using this form.'
-				), 200);
+				), 400);
 			}
 
 			// If still pending, return "new" status again
@@ -120,6 +123,7 @@
 				), 200);
 			}
 
+			// Otherwise, throw success message
 			return new WP_REST_Response(array(
 				'code' => 200,
 				'status' => 'success',
