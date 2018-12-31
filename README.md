@@ -63,3 +63,4 @@ var response = {
 | `400`  | `unsubscribed`      | You had previously unsubscribed and cannot be resubscribed using this form. |
 | `200`  | `success`           | You're now subscribed.                                                      |
 | `200`  | `success`           | Your account has been updated.                                              |
+| `202`  | `pending`           | Almost there! To complete your subscription, please click the confirmation link in the email that was just sent to your inbox. |                                              |

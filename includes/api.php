@@ -118,12 +118,31 @@
 					), 400);
 				}
 
-				// If they're already unsubscribed
+				// If they're unsubscribed, resend confirmation email
+				$mc_params['body'] = json_encode(array(
+						'status' => 'pending',
+						'merge_fields' => $merge_fields,
+						'interests' => $groups,
+				));
+				$request = wp_remote_request( $url, $mc_params );
+				$response = wp_remote_retrieve_body( $request );
+				$data = json_decode( $response, true );
+
+				// If there's an error
+				if ( array_key_exists( 'status', $data ) && $data['status'] === 400 ) {
+					return new WP_REST_Response(array(
+						'code' => 400,
+						'status' => 'unsubscribed',
+						'message' => 'You had previously unsubscribed and cannot be resubscribed using this form.'
+					), 400);
+				}
+
+				// Otherwise, partial success
 				return new WP_REST_Response(array(
-					'code' => 400,
-					'status' => 'unsubscribed',
-					'message' => 'You had previously unsubscribed and cannot be resubscribed using this form.'
-				), 400);
+					'code' => 202,
+					'status' => 'subscribed',
+					'message' => 'Almost there! To complete your subscription, please click the confirmation link in the email that was just sent to your inbox.'
+				), 202);
 
 			}
 
@@ -154,6 +173,7 @@
 			), 400);
 		}
 
+		// Success
 		return new WP_REST_Response(array(
 			'code' => 200,
 			'status' => 'success',
