@@ -61,7 +61,7 @@
 		} else {
 			$groups = array();
 			foreach ( $params['group'] as $key => $group ) {
-				$groups[$key] = (empty($group) ? false : true);
+				$groups[$key] = true;
 			}
 		}
 
