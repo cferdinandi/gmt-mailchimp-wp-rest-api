@@ -13,8 +13,6 @@ You can also find the API Interest Group IDs needed for the field values below.
 /wp-json/gmt-mailchimp/v1/subscribe
 ```
 
-*__Poorly documented feature:__ you can remove users from whatever groups you pass in by adding the `u` parameter to your API call.*
-
 ### Form Fields
 
 The only required field is an email address. Give the `name` attribute a value of `email`.

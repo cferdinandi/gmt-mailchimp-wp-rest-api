@@ -56,13 +56,12 @@
 		}
 
 		// Create interest groups array
-		$join = $params['u'] ? false : true;
 		if ( empty( $params['group'] ) ) {
 			$groups = new stdClass();
 		} else {
 			$groups = array();
 			foreach ( $params['group'] as $key => $group ) {
-				$groups[$key] = $join;
+				$groups[$key] = true;
 			}
 		}
 
