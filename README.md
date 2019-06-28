@@ -15,22 +15,14 @@ First, configure your API settings under `Settings > MailChimp API` in the Dashb
 
 **Required Fields**
 
-`API Key`
-: Your [API key from Mailchimp](https://mailchimp.com/help/about-api-keys/).
-
-`List ID`
-: The [ID of the list/audience](https://mailchimp.com/help/find-audience-id/) that you want to add subscribers to.
+- `API Key` - Your [API key from Mailchimp](https://mailchimp.com/help/about-api-keys/).
+- `List ID` - The [ID of the list/audience](https://mailchimp.com/help/find-audience-id/) that you want to add subscribers to.
 
 **Optional Fields**
 
-`Form Key`/`Form Secret`
-: If you're using a form to submit to the API, adding a hidden key/secret field to the form can help minimize bulk robot submissions. Details on how to use it in the `Sign Up Form` section below.
-
-`Honeypot`
-: The `name of a hidden` field you can add to your field to help detect bot form submissions without inconveniencing real humans. Details on how to use it in the `Sign Up Form` section below.
-
-`Allowed Domains`
-: You can restrict use of the API to only calls that happen from an allowed list of domains. Separate allowed domains with a comma.
+- `Form Key`/`Form Secret` - If you're using a form to submit to the API, adding a hidden key/secret field to the form can help minimize bulk robot submissions. Details on how to use it in the `Sign Up Form` section below.
+- `Honeypot` - The `name of a hidden` field you can add to your field to help detect bot form submissions without inconveniencing real humans. Details on how to use it in the `Sign Up Form` section below.
+- `Allowed Domains` - You can restrict use of the API to only calls that happen from an allowed list of domains. Separate allowed domains with a comma.
 
 **API Details**
 
