@@ -7,10 +7,14 @@ Before doing anything, configure your settings under `Settings > MailChimp API` 
 
 You can also find the API Interest Group IDs needed for the field values below.
 
-### The Endpoint
+### The Endpoints
 
 ```bash
+# Add a subscriber (POST)
 /wp-json/gmt-mailchimp/v1/subscribe
+
+# Get subscriber count (GET)
+/wp-json/gmt-mailchimp/v1/count
 ```
 
 ### Form Fields
