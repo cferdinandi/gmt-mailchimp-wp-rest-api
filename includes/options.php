@@ -174,7 +174,7 @@
 
 		foreach ( $categories['categories'] as $category ) {
 			$html .=
-				'<strong>' . esc_html($category['title']) . '</strong>' .
+				'<strong>' . esc_html($category['title']) . ' (' . $category['id'] . ')</strong>' .
 				'<ul>';
 			$groups = mailchimp_rest_api_get_mailchimp_data($category['id']);
 

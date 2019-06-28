@@ -1,5 +1,10 @@
 <?php
 
+	/**
+	 * Subscriber a user
+	 * @param  Object $request The request data
+	 * @return JSON            WP Response Object
+	 */
 	function gmt_mailchimp_wp_rest_api_subscribe_user($request) {
 
 		// Variables
@@ -183,11 +188,148 @@
 
 	}
 
+	/**
+	 * Round a number down to nearest value (10, 100, etc)
+	 * @param  Integer $num       The number to round
+	 * @param  Integer $precision The precision to round by
+	 * @return Integer            The rounded number
+	 */
+	function gmt_mailchimp_wp_rest_api_round($num, $precision) {
+		$num = intval($num);
+		if (empty($precision)) return $num;
+		$precision = intval($precision);
+		return floor($num / $precision) * $precision;
+	}
+
+
+	/**
+	 * Get the number of total subscribers on the list
+	 * @param  Array $options The API options
+	 * @param  Array $params  The request parameters
+	 * @return JSON           The WP API response
+	 */
+	function gmt_mailchimp_wp_rest_api_get_all_subscribers($options, $params) {
+
+		// Create API call
+		$shards = explode( '-', $options['mailchimp_api_key'] );
+		$url = 'https://' . $shards[1] . '.api.mailchimp.com/3.0/lists/' . $options['mailchimp_list_id'] . '/';
+		$mc_params = array(
+			'headers' => array(
+				'Authorization' => 'Basic ' . base64_encode( 'mailchimp' . ':' . $options['mailchimp_api_key'] )
+			),
+		);
+
+		// Make the request
+		$request = wp_remote_get( $url, $mc_params );
+		$response = wp_remote_retrieve_body( $request );
+		$data = json_decode( $response, true );
+
+		// If something went wrong, throw an error
+		if ( !array_key_exists( 'stats', $data ) || !array_key_exists( 'member_count', $data['stats'] ) ) {
+			return new WP_REST_Response(array(
+				'code' => 400,
+				'status' => 'failed',
+				'message' => 'Unable to get subscriber count. Please try again.'
+			), 400);
+		}
+
+		// Otherwise, return success
+		return new WP_REST_Response(array(
+			'code' => 200,
+			'status' => 'success',
+			'message' => gmt_mailchimp_wp_rest_api_round($data['stats']['member_count'], $params['round']),
+		), 200);
+
+	}
+
+
+	/**
+	 * Get the number of total subscribers on the list
+	 * @param  Array $options The API options
+	 * @param  Array $params  The request parameters
+	 * @return JSON           The WP API response
+	 */
+	function gmt_mailchimp_wp_rest_api_get_subscribers_by_group($options, $params) {
+
+		// Create API call
+		$shards = explode( '-', $options['mailchimp_api_key'] );
+		$url = 'https://' . $shards[1] . '.api.mailchimp.com/3.0/lists/' . $options['mailchimp_list_id'] . '/interest-categories/' . $params['category'] . '/interests/' . $params['id'];
+		$mc_params = array(
+			'headers' => array(
+				'Authorization' => 'Basic ' . base64_encode( 'mailchimp' . ':' . $options['mailchimp_api_key'] )
+			),
+		);
+
+		// Make the request
+		$request = wp_remote_get( $url, $mc_params );
+		$response = wp_remote_retrieve_body( $request );
+		$data = json_decode( $response, true );
+
+		// If something went wrong, throw an error
+		if ( !array_key_exists( 'subscriber_count', $data ) ) {
+			return new WP_REST_Response(array(
+				'code' => 400,
+				'status' => 'failed',
+				'message' => 'Unable to get subscriber count. Please try again.'
+			), 400);
+		}
+
+		return new WP_REST_Response(array(
+			'code' => 200,
+			'status' => 'success',
+			'message' => gmt_mailchimp_wp_rest_api_round($data['subscriber_count'], $params['round']),
+		), 200);
+
+	}
+
+
+	/**
+	 * Get the subscriber count
+	 * @param  Array $request The request data
+	 * @return JSON           WP Response Object
+	 */
+	function gmt_mailchimp_wp_rest_api_subscriber_count($request) {
+
+		// Variables
+		$options = mailchimp_rest_api_get_theme_options();
+		$params = $request->get_params();
+
+		// Check domain whitelist
+		if (!empty($options['origin'])) {
+			$origin = $request->get_header('origin');
+			if (empty($origin) || !in_array($origin, explode(',', $options['origin']))) {
+				return new WP_REST_Response(array(
+					'code' => 400,
+					'status' => 'disallowed_domain',
+					'message' => 'This domain is not whitelisted.'
+				), 400);
+			}
+		}
+
+		// If not interest group details are provided, get all subscribers
+		if (empty($params['category']) || empty($params['id'])) {
+			return gmt_mailchimp_wp_rest_api_get_all_subscribers($options, $params);
+		}
+
+		// Otherwise, get subscribers for an interest group
+		return gmt_mailchimp_wp_rest_api_get_subscribers_by_group($options, $params);
+
+	}
+
 
 	function gmt_mailchimp_wp_rest_api_register_routes () {
+
+		// Add subscribers
 		register_rest_route('gmt-mailchimp/v1', '/subscribe', array(
 			'methods' => 'POST',
 			'callback' => 'gmt_mailchimp_wp_rest_api_subscribe_user',
 		));
+
+		// Get subscriber count
+		register_rest_route('gmt-mailchimp/v1', '/count', array(
+			'methods' => 'GET',
+			'callback' => 'gmt_mailchimp_wp_rest_api_subscriber_count',
+		));
+
 	}
 	add_action('rest_api_init', 'gmt_mailchimp_wp_rest_api_register_routes');
