@@ -198,7 +198,7 @@
 		$num = intval($num);
 		if (empty($precision)) return $num;
 		$precision = intval($precision);
-		return floor($num / $precision) * $precision;
+		return number_format(floor($num / $precision) * $precision);
 	}
 
 
