@@ -41,7 +41,7 @@
 		$options = mailchimp_rest_api_get_theme_options();
 		?>
 		<input type="text" name="mailchimp_rest_api_theme_options[mailchimp_form_key]" class="regular-text" id="mailchimp_rest_api_form_key" value="<?php echo esc_attr( $options['mailchimp_form_key'] ); ?>" />
-		<label class="description" for="mailchimp_rest_api_form_key"><?php _e( 'Form Key', 'mailchimp_rest_api' ); ?></label>
+		<label class="description" for="mailchimp_rest_api_form_key"><?php _e( 'Form Key (optional)', 'mailchimp_rest_api' ); ?></label>
 		<?php
 	}
 
@@ -49,7 +49,7 @@
 		$options = mailchimp_rest_api_get_theme_options();
 		?>
 		<input type="text" name="mailchimp_rest_api_theme_options[mailchimp_form_secret]" class="regular-text" id="mailchimp_rest_api_api_form_secret" value="<?php echo esc_attr( $options['mailchimp_form_secret'] ); ?>" />
-		<label class="description" for="mailchimp_rest_api_api_form_secret"><?php _e( 'Form Secret', 'mailchimp_rest_api' ); ?></label>
+		<label class="description" for="mailchimp_rest_api_api_form_secret"><?php _e( 'Form Secret (optional)', 'mailchimp_rest_api' ); ?></label>
 		<?php
 	}
 
@@ -57,7 +57,7 @@
 		$options = mailchimp_rest_api_get_theme_options();
 		?>
 		<input type="text" name="mailchimp_rest_api_theme_options[mailchimp_honeypot]" class="regular-text" id="mailchimp_rest_api_api_honeypot" value="<?php echo esc_attr( $options['mailchimp_honeypot'] ); ?>" />
-		<label class="description" for="mailchimp_rest_api_api_honeypot"><?php _e( 'Honeypot Field Name', 'mailchimp_rest_api' ); ?></label>
+		<label class="description" for="mailchimp_rest_api_api_honeypot"><?php _e( 'Honeypot Field Name (optional)', 'mailchimp_rest_api' ); ?></label>
 		<?php
 	}
 
@@ -65,7 +65,7 @@
 		$options = mailchimp_rest_api_get_theme_options();
 		?>
 		<input type="text" name="mailchimp_rest_api_theme_options[mailchimp_origin]" class="regular-text" id="mailchimp_rest_api_api_origin" value="<?php echo esc_attr( $options['mailchimp_origin'] ); ?>" />
-		<label class="description" for="mailchimp_rest_api_api_origin"><?php _e( 'Whitelisted domain origins for the API (optional, comma-separated)', 'mailchimp_rest_api' ); ?></label>
+		<label class="description" for="mailchimp_rest_api_api_origin"><?php _e( 'Allowed domain origins for the API (optional, comma-separated)', 'mailchimp_rest_api' ); ?></label>
 		<?php
 	}
 
@@ -249,7 +249,7 @@
 		add_settings_field( 'key', __( 'Form Key', 'mailchimp_rest_api' ), 'mailchimp_rest_api_settings_field_key', 'mailchimp_rest_api_options', 'mailchimp_rest_api' );
 		add_settings_field( 'secret', __( 'Form Secret', 'mailchimp_rest_api' ), 'mailchimp_rest_api_settings_field_secret', 'mailchimp_rest_api_options', 'mailchimp_rest_api' );
 		add_settings_field( 'honeypot', __( 'Honeypot', 'mailchimp_rest_api' ), 'mailchimp_rest_api_settings_field_honeypot', 'mailchimp_rest_api_options', 'mailchimp_rest_api' );
-		add_settings_field( 'origin', __( 'Whitelisted Domains', 'mailchimp_rest_api' ), 'mailchimp_rest_api_settings_field_origin', 'mailchimp_rest_api_options', 'mailchimp_rest_api' );
+		add_settings_field( 'origin', __( 'Allowed Domains', 'mailchimp_rest_api' ), 'mailchimp_rest_api_settings_field_origin', 'mailchimp_rest_api_options', 'mailchimp_rest_api' );
 
 	}
 	add_action( 'admin_init', 'mailchimp_rest_api_theme_options_init' );
