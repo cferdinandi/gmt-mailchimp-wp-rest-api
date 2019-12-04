@@ -1,6 +1,29 @@
 <?php
 
 	/**
+	 * Add tags to a user
+	 * @param  String $base_url  The base URL
+	 * @param  Array  $mc_params MailChimp API Parameters
+	 * @param  String $email     The user's email address
+	 * @param  Array  $tags      Tags to add to the user account
+	 */
+	function gmt_mailchimp_wp_rest_api_add_tags_to_user($base_url, $mc_params, $email, $tags) {
+
+		// If there are no tags to add, bail
+		if ( empty($tags) ) return;
+
+		// Update method
+		$mc_params['method'] = 'POST';
+
+		// Add each tag to the user
+		foreach ($tags as $tag => $val) {
+			$mc_params['body'] = array('email_address' => $email);
+			$request = wp_remote_request( $base_url . '/' . $tag . '/members', $mc_params );
+		}
+
+	}
+
+	/**
 	 * Subscriber a user
 	 * @param  Object $request The request data
 	 * @return JSON            WP Response Object
@@ -73,75 +96,63 @@
 
 		// Create API call
 		$shards = explode( '-', $options['mailchimp_api_key'] );
-		$url = 'https://' . $shards[1] . '.api.mailchimp.com/3.0/lists/' . $options['mailchimp_list_id'] . '/members';
+		$url = 'https://' . $shards[1] . '.api.mailchimp.com/3.0/lists/' . $options['mailchimp_list_id'] . '/members/' . md5( $params['email'] );
+		$tags_url = 'https://' . $shards[1] . '.api.mailchimp.com/3.0/lists/' . $options['mailchimp_list_id'] . '/segments/';
+		$body_params = array(
+			'status' => 'subscribed',
+			'merge_fields' => $merge_fields,
+			'interests' => $groups,
+		);
+		if ( !$params['do-not-create'] ) {
+			$body_params['email_address'] = $params['email'];
+			$body_params['status_if_new'] = 'subscribed';
+		}
 		$mc_params = array(
 			'headers' => array(
 				'Authorization' => 'Basic ' . base64_encode( 'mailchimp' . ':' . $options['mailchimp_api_key'] )
 			),
-			'body' => json_encode(array(
-				'status' => 'subscribed',
-				'email_address' => $params['email'],
-				'merge_fields' => $merge_fields,
-				'interests' => $groups,
-			)),
+			'method' => 'PUT',
+			'body' => json_encode($body_params),
 		);
 
-		// Add subscriber
-		if ( !$params['do-not-create'] ) {
-			$request = wp_remote_post( $url, $mc_params );
-			$response = wp_remote_retrieve_body( $request );
-			$data = json_decode( $response, true );
-		}
+		// Add or edit the subscriber
+		$request = wp_remote_request( $url, $mc_params );
+		$response = wp_remote_retrieve_body( $request );
+		$data = json_decode( $response, true );
 
-		// If subscriber already exists, update profile
-		if ( $params['do-not-create'] || ( array_key_exists( 'status', $data ) && $data['status'] === 400 && $data['title'] === 'Member Exists' ) ) {
+		// If there was an error
+		if ( array_key_exists( 'status', $data ) && $data['status'] >= 400 ) {
 
-			$url .= '/' . md5( $params['email'] );
-			$mc_params = array(
-				'headers' => array(
-					'Authorization' => 'Basic ' . base64_encode( 'mailchimp' . ':' . $options['mailchimp_api_key'] )
-				),
-				'method' => 'PUT',
-				'body' => json_encode(array(
-					'status' => 'subscribed',
-					'merge_fields' => $merge_fields,
-					'interests' => $groups,
-				)),
-			);
-			$request = wp_remote_request( $url, $mc_params );
-			$response = wp_remote_retrieve_body( $request );
-			$data = json_decode( $response, true );
+			// If user doesn't exist and they shouldn't be created, bail
+			if ( $params['do-not-create'] && $data['title'] === 'Invalid Resource' ) {
+				return new WP_REST_Response(array(
+					'code' => 400,
+					'status' => 'invalid_user',
+					'message' => 'This subscriber does not exist.'
+				), 400);
+			}
 
-			// If there's an error
-			if ( array_key_exists( 'status', $data ) && $data['status'] === 400 ) {
+			// If user previously unsubscribed, resend confirmation email
+			if ( $data['title'] === 'Member In Compliance State' ) {
 
-				// If the user does not exist
-				if ( $params['do-not-create'] ) {
-					return new WP_REST_Response(array(
-						'code' => 400,
-						'status' => 'invalid_user',
-						'message' => 'This subscriber does not exist.'
-					), 400);
-				}
-
-				// If they're unsubscribed, resend confirmation email
-				$mc_params['body'] = json_encode(array(
-						'status' => 'pending',
-						'merge_fields' => $merge_fields,
-						'interests' => $groups,
-				));
+				// Send the API call
+				$body_params['status'] = 'pending';
+				$mc_params['body'] = json_encode($body_params);
 				$request = wp_remote_request( $url, $mc_params );
 				$response = wp_remote_retrieve_body( $request );
 				$data = json_decode( $response, true );
 
 				// If there's an error
-				if ( array_key_exists( 'status', $data ) && $data['status'] === 400 ) {
+				if ( array_key_exists( 'status', $data ) && $data['status'] >= 400 ) {
 					return new WP_REST_Response(array(
 						'code' => 400,
 						'status' => 'unsubscribed',
 						'message' => 'You had previously unsubscribed and cannot be resubscribed using this form.'
 					), 400);
 				}
+
+				// Add tags
+				gmt_mailchimp_wp_rest_api_add_tags_to_user($tags_url, $mc_params, $params['email'], $params['tag']);
 
 				// Otherwise, partial success
 				return new WP_REST_Response(array(
@@ -152,34 +163,19 @@
 
 			}
 
-			// If still pending, return "new" status again
-			if ( array_key_exists( 'status', $data ) && $data['status'] === 'pending' ) {
-				return new WP_REST_Response(array(
-					'code' => 200,
-					'status' => 'success',
-					'message' => 'You\'re now subscribed.'
-				), 200);
-			}
-
-			// Otherwise, throw success message
-			return new WP_REST_Response(array(
-				'code' => 200,
-				'status' => 'success',
-				'message' => 'Your account has been updated.'
-			), 200);
-
-		}
-
-		// If something went wrong, throw an error
-		if ( array_key_exists( 'status', $data ) && $data['status'] === 404 ) {
+			// Otherwise, throw a generic error
 			return new WP_REST_Response(array(
 				'code' => 400,
 				'status' => 'failed',
 				'message' => 'Unable to subscribe at this time. Please try again.'
 			), 400);
+
 		}
 
-		// Success
+		// Add tags
+		gmt_mailchimp_wp_rest_api_add_tags_to_user($tags_url, $mc_params, $params['email'], $params['tag']);
+
+		// Return a success message
 		return new WP_REST_Response(array(
 			'code' => 200,
 			'status' => 'success',

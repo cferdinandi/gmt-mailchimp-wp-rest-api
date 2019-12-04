@@ -129,7 +129,7 @@
 	 * @param  string $group The group ID
 	 * @return array         Data from the MailChimp API
 	 */
-	function mailchimp_rest_api_get_mailchimp_data($group = null) {
+	function mailchimp_rest_api_get_mailchimp_group_data($group = null) {
 
 		$options = mailchimp_rest_api_get_theme_options();
 
@@ -160,7 +160,41 @@
 
 	}
 
+	/**
+	 * Get data from the MailChimp API
+	 * @param  string $group The group ID
+	 * @return array         Data from the MailChimp API
+	 */
+	function mailchimp_rest_api_get_mailchimp_tag_data($group = null) {
 
+		$options = mailchimp_rest_api_get_theme_options();
+
+		if (empty($options['mailchimp_api_key']) || empty($options['mailchimp_list_id'])) return;
+
+		// Create API call
+		$shards = explode( '-', $options['mailchimp_api_key'] );
+		$url = 'https://' . $shards[1] . '.api.mailchimp.com/3.0/lists/' . $options['mailchimp_list_id'] . '/segments?type=static';
+		$params = array(
+			'headers' => array(
+				'Authorization' => 'Basic ' . base64_encode( 'mailchimp' . ':' . $options['mailchimp_api_key'] )
+			),
+		);
+
+		// Get data from  MailChimp
+		$request = wp_remote_get( $url, $params );
+		$response = wp_remote_retrieve_body( $request );
+		$data = json_decode( $response, true );
+
+		// If request fails, bail
+		// if ( empty( $group ) ) {
+		// 	if ( !array_key_exists( 'categories', $data ) || !is_array( $data['categories'] ) || empty( $data['categories'] ) ) return array();
+		// } else {
+			if ( !array_key_exists( 'segments', $data ) || !is_array( $data['segments'] ) || empty( $data['segments'] ) ) return array();
+		// }
+
+		return $data;
+
+	}
 
 	/**
 	 * Render interest groups
@@ -169,14 +203,14 @@
 	function mailchimp_rest_api_get_interest_groups() {
 
 		// Variables
-		$categories = mailchimp_rest_api_get_mailchimp_data();
+		$categories = mailchimp_rest_api_get_mailchimp_group_data();
 		$html = '<h3>' . __('Groups', 'mailchimp_rest_api') . '</h3>';
 
 		foreach ( $categories['categories'] as $category ) {
 			$html .=
 				'<strong>' . esc_html($category['title']) . ' (' . $category['id'] . ')</strong>' .
 				'<ul>';
-			$groups = mailchimp_rest_api_get_mailchimp_data($category['id']);
+			$groups = mailchimp_rest_api_get_mailchimp_group_data($category['id']);
 
 			foreach ($groups['interests'] as $group) {
 				$html .=
@@ -189,6 +223,25 @@
 		}
 
 		echo $html;
+	}
+
+
+
+	/**
+	 * Render interest groups
+	 * @param  array $details  Saved data
+	 */
+	function mailchimp_rest_api_get_tags() {
+
+		// Variables
+		$tags = mailchimp_rest_api_get_mailchimp_tag_data();
+		$html = '<h3>' . __('Tags', 'mailchimp_rest_api') . '</h3>';
+
+		foreach ($tags['segments'] as $tag) {
+			$html .= '<li>' . $tag['name'] . ': ' . $tag['id'] . '</li>';
+		}
+
+		echo '<ul>' . $html . '</ul>';
 	}
 
 
@@ -211,6 +264,7 @@
 					do_settings_sections( 'mailchimp_rest_api_options' );
 					submit_button();
 					mailchimp_rest_api_get_interest_groups();
+					mailchimp_rest_api_get_tags();
 				?>
 			</form>
 		</div>

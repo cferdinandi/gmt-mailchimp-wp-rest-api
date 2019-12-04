@@ -55,6 +55,7 @@ Pass these along as query string parameters on your endpoint.
 | `email`         | The subscriber email address                | String  | `hi@there.com`       | Yes      |
 | `merge`         | Any merge tags to add (ex `FNAME`)          | String  | `merge[FNAME]=chris` | No       |
 | `group`         | Any interest groups to add                  | Boolean | `group[1234]=1`      | No       |
+| `tag`           | Any tags to add                             | Boolean | `tag[5678]=1`        | No       |
 | `<Form Key>`    | `<Form Secret>` (from your settings)        | String  | `1234=abcdef`        | No       |
 | `<Honeypot>`    | A honeypot value if enabled in settings     | String  | `     `              | No       |
 | `do-not-create` | Only update existing user, do not subscribe | Boolean | `1`                  | No       |
@@ -92,7 +93,6 @@ The API will return a JSON object with a code, status, and message.
 | `400`  | `invalid_user`      | This subscriber does not exist.                                             |
 | `400`  | `unsubscribed`      | You had previously unsubscribed and cannot be resubscribed using this form. |
 | `200`  | `success`           | You're now subscribed.                                                      |
-| `200`  | `success`           | Your account has been updated.                                              |
 | `202`  | `pending`           | Almost there! To complete your subscription, please click the confirmation link in the email that was just sent to your inbox. |
 
 
