@@ -18,7 +18,7 @@
 		// Add each tag to the user
 		foreach ($tags as $tag => $val) {
 			$mc_params['body'] = array('email_address' => $email);
-			$request = wp_remote_request( $base_url . '/' . $tag . '/members', $mc_params );
+			$request = wp_remote_request( $base_url . $tag . '/members', $mc_params );
 		}
 
 	}
