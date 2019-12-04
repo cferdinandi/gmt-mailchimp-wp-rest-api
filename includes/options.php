@@ -173,7 +173,7 @@
 
 		// Create API call
 		$shards = explode( '-', $options['mailchimp_api_key'] );
-		$url = 'https://' . $shards[1] . '.api.mailchimp.com/3.0/lists/' . $options['mailchimp_list_id'] . '/segments?type=static';
+		$url = 'https://' . $shards[1] . '.api.mailchimp.com/3.0/lists/' . $options['mailchimp_list_id'] . '/segments?type=static&count=1000';
 		$params = array(
 			'headers' => array(
 				'Authorization' => 'Basic ' . base64_encode( 'mailchimp' . ':' . $options['mailchimp_api_key'] )
