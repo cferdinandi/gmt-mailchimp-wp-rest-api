@@ -74,23 +74,19 @@
 		}
 
 		// Create merge fields array
-		if ( empty( $params['merge'] ) ) {
-			$merge_fields = new stdClass();
-		} else {
-			$merge_fields = array();
+		$merge_fields = new stdClass();
+		if ( !empty( $params['merge'] ) ) {
 			foreach ( $params['merge'] as $key => $merge_field ) {
-				$merge_fields[$key] = $merge_field;
+				$merge_fields->$key = $merge_field;
 			}
 		}
 
 		// Create interest groups array
 		$join = $params['u'] ? false : true;
-		if ( empty( $params['group'] ) ) {
-			$groups = new stdClass();
-		} else {
-			$groups = array();
+		$groups = new stdClass();
+		if ( !empty( $params['group'] ) ) {
 			foreach ( $params['group'] as $key => $group ) {
-				$groups[$key] = $join;
+				$groups->$key = $join;
 			}
 		}
 
