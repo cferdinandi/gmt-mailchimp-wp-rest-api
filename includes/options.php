@@ -67,6 +67,19 @@
 		<input type="text" name="mailchimp_rest_api_theme_options[mailchimp_origin]" class="regular-text" id="mailchimp_rest_api_api_origin" value="<?php echo esc_attr( $options['mailchimp_origin'] ); ?>" />
 		<label class="description" for="mailchimp_rest_api_api_origin"><?php _e( 'Allowed domain origins for the API (optional, comma-separated)', 'mailchimp_rest_api' ); ?></label>
 		<?php
+  }
+
+  function mailchimp_rest_api_settings_field_required_merge() {
+		$options = mailchimp_rest_api_get_theme_options();
+		?>
+		<input type="text" name="mailchimp_rest_api_theme_options[mailchimp_required_merge]" class="regular-text" id="mailchimp_rest_api_required_merge" value="<?php echo esc_attr( $options['mailchimp_required_merge'] ); ?>" />
+		<label class="description" for="mailchimp_rest_api_required_merge"><?php _e( 'Required MERGE tags of the list (optional, comma-separated)', 'mailchimp_rest_api' ); ?></label>
+    <p>
+      <?php
+        _e( 'If you have a required MERGE tag you have to fill that field in order to marketing fields to work', 'mailchimp_rest_api' );
+      ?>
+    </p>
+		<?php
 	}
 
 
@@ -87,6 +100,7 @@
 			'mailchimp_form_secret' => '',
 			'mailchimp_honeypot' => '',
 			'mailchimp_origin' => '',
+			'mailchimp_required_merge' => '',
 		);
 
 		$defaults = apply_filters( 'mailchimp_rest_api_default_theme_options', $defaults );
@@ -118,6 +132,9 @@
 
 		if ( isset( $input['mailchimp_origin'] ) && ! empty( $input['mailchimp_origin'] ) )
 			$output['mailchimp_origin'] = wp_filter_nohtml_kses( str_replace(' ', '', $input['mailchimp_origin']) );
+    
+      if ( isset( $input['mailchimp_required_merge'] ) && ! empty( $input['mailchimp_required_merge'] ) )
+			$output['mailchimp_required_merge'] = wp_filter_nohtml_kses( str_replace(' ', '', $input['mailchimp_required_merge']) );
 
 		return apply_filters( 'mailchimp_rest_api_theme_options_validate', $output, $input );
 	}
@@ -194,7 +211,119 @@
 
 		return $data;
 
+  }
+
+  /**
+	 * Get Marketing permissions for the configured list/audience
+	 * @return array  Marketing permissions for the list
+	 */
+	function mailchimp_rest_api_get_list_marketing_permissions() {
+
+    $options = mailchimp_rest_api_get_theme_options();
+
+		if ( empty( $options['mailchimp_api_key'] ) || empty( $options['mailchimp_list_id'] ) ) return;
+
+		// Create API call
+		$shards = explode( '-', $options['mailchimp_api_key'] );
+		$url = 'https://' . $shards[1] . '.api.mailchimp.com/3.0/lists/' . $options['mailchimp_list_id'] . '/members';
+		$params = array(
+			'headers' => array(
+				'Authorization' => 'Basic ' . base64_encode( 'mailchimp' . ':' . $options['mailchimp_api_key'] )
+			),
+		);
+
+		// Get data from  MailChimp
+		$request = wp_remote_get( $url, $params );
+		$response = wp_remote_retrieve_body( $request );
+		$data = json_decode( $response, true );
+
+    $dummy_member = NULL;
+    $should_delete_dummy = false;
+
+		// If there are no members in the list, we need to create a dummy one
+		if( empty($data['members']) ) {
+      $merge_fields = new stdClass();
+
+      // We have to set the required merge tags (if any) for avoiding erros 
+      if( !empty( $options['mailchimp_required_merge'] ) ) {
+        $merge_fields = [];
+
+        foreach ( explode( ',', $options['mailchimp_required_merge'] ) as $merge_field ) {
+          $merge_fields[$merge_field] = 'Dummy';
+        }
+      }
+
+      $dummy_member = array(
+        'email_address' => 'dummy+member@deleteme.com',
+        'status' => 'subscribed',
+        'merge_fields' => $merge_fields
+      );
+
+      $subscribe_params = $params;
+      $subscribe_params['method'] = 'POST';
+      $subscribe_params['body'] = json_encode($dummy_member);
+
+      // Subscribe the member
+      $request = wp_remote_post($url, $subscribe_params);
+      $response = wp_remote_retrieve_body( $request );
+      $http_code = wp_remote_retrieve_response_code( $request );
+      $dummy_member = json_decode( $response, true );
+
+      if( $http_code > 399 ) {
+        $text = __( 'There was an error getting marketing permissions. Please make sure you haven\'t forgot to add required MERGE tags', 'mailchimp_rest_api' );
+        return array(
+          array(
+            'text' => $text,
+            'marketing_permission_id' => ''
+          )
+        );
+      }
+      
+      // If we subscribed the member successfully, inform that we have to delete it after
+      $should_delete_dummy = true;
+    } else {
+      // If the list has members, just get one of them
+      $dummy_member = $data['members'][0];
+    }
+
+    // Get the marketing fields
+    $marketing_permissions = !empty($dummy_member['marketing_permissions']) ? $dummy_member['marketing_permissions'] : [];
+
+    // If we created a dummy member, delete (archive) it from the list
+    if( $should_delete_dummy ) {
+      $links = $dummy_member['_links'];
+      $delete_permanent = $links[array_search('delete', array_column($links, 'rel'))];
+
+      $delete_params = $params;
+      $delete_params['method'] = $delete_permanent['method'];
+      $request = wp_remote_post( $delete_permanent['href'], $delete_params );
+      $response = wp_remote_retrieve_body( $request );
+    }
+
+		return $marketing_permissions;
 	}
+  
+  /**
+	 * Render marketing permissions
+	 * @param  array $details  Saved data
+	 */
+	function mailchimp_rest_api_get_marketing_permissions() {
+
+		// Variables
+		$permissions = mailchimp_rest_api_get_list_marketing_permissions();
+		$html = '<h3>' . __('Marketing permissions', 'mailchimp_rest_api') . '</h3> <ul>';
+
+		foreach ( $permissions as $permission ) {
+			$html .= '<li>' .
+          esc_html($permission['text']) . ' (<strong>' . $permission['marketing_permission_id'] . '</strong>)' .
+          '</li>';
+    }
+    
+    $html .= '</ul>';
+
+		echo $html;
+	}
+
 
 	/**
 	 * Render interest groups
@@ -263,6 +392,7 @@
 					settings_fields( 'mailchimp_rest_api_options' );
 					do_settings_sections( 'mailchimp_rest_api_options' );
 					submit_button();
+					mailchimp_rest_api_get_marketing_permissions();
 					mailchimp_rest_api_get_interest_groups();
 					mailchimp_rest_api_get_tags();
 				?>
@@ -303,7 +433,8 @@
 		add_settings_field( 'key', __( 'Form Key', 'mailchimp_rest_api' ), 'mailchimp_rest_api_settings_field_key', 'mailchimp_rest_api_options', 'mailchimp_rest_api' );
 		add_settings_field( 'secret', __( 'Form Secret', 'mailchimp_rest_api' ), 'mailchimp_rest_api_settings_field_secret', 'mailchimp_rest_api_options', 'mailchimp_rest_api' );
 		add_settings_field( 'honeypot', __( 'Honeypot', 'mailchimp_rest_api' ), 'mailchimp_rest_api_settings_field_honeypot', 'mailchimp_rest_api_options', 'mailchimp_rest_api' );
-		add_settings_field( 'origin', __( 'Allowed Domains', 'mailchimp_rest_api' ), 'mailchimp_rest_api_settings_field_origin', 'mailchimp_rest_api_options', 'mailchimp_rest_api' );
+    add_settings_field( 'origin', __( 'Allowed Domains', 'mailchimp_rest_api' ), 'mailchimp_rest_api_settings_field_origin', 'mailchimp_rest_api_options', 'mailchimp_rest_api' );
+    add_settings_field( 'required_merge', __( 'Required MERGE fields', 'mailchimp_rest_api' ), 'mailchimp_rest_api_settings_field_required_merge', 'mailchimp_rest_api_options', 'mailchimp_rest_api' );
 
 	}
 	add_action( 'admin_init', 'mailchimp_rest_api_theme_options_init' );

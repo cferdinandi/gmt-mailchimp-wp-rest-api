@@ -50,16 +50,17 @@ Add a new subscriber or update an existing one.
 
 Pass these along as query string parameters on your endpoint.
 
-| Parameter       | Description                                 | Value   | Example              | Required |
-|-----------------|---------------------------------------------|---------|----------------------|----------|
-| `email`         | The subscriber email address                | String  | `hi@there.com`       | Yes      |
-| `merge`         | Any merge tags to add (ex `FNAME`)          | String  | `merge[FNAME]=chris` | No       |
-| `group`         | Any interest groups to add                  | Boolean | `group[1234]=1`      | No       |
-| `tag`           | Any tags to add                             | Boolean | `tag[5678]=1`        | No       |
-| `<Form Key>`    | `<Form Secret>` (from your settings)        | String  | `1234=abcdef`        | No       |
-| `<Honeypot>`    | A honeypot value if enabled in settings     | String  | `     `              | No       |
-| `do-not-create` | Only update existing user, do not subscribe | Boolean | `1`                  | No       |
-| `u`             | Remove user from provided interest groups   | Boolean | `1`                  | No       |
+| Parameter       | Description                                       | Value   | Example              | Required |
+|-----------------|---------------------------------------------------|---------|----------------------|----------|
+| `email`         | The subscriber email address                      | String  | `hi@there.com`       | Yes      |
+| `merge`         | Any merge tags to add (ex `FNAME`)                | String  | `merge[FNAME]=chris` | No       |
+| `group`         | Any interest groups to add                        | Boolean | `group[1234]=1`      | No       |
+| `marketing`     | Any marketing fields to set (from settings page)  | Boolean | `marketing[1a3b4]=1` | No       |
+| `tag`           | Any tags to add                                   | Boolean | `tag[5678]=1`        | No       |
+| `<Form Key>`    | `<Form Secret>` (from your settings)              | String  | `1234=abcdef`        | No       |
+| `<Honeypot>`    | A honeypot value if enabled in settings           | String  | `     `              | No       |
+| `do-not-create` | Only update existing user, do not subscribe       | Boolean | `1`                  | No       |
+| `u`             | Remove user from provided interest groups         | Boolean | `1`                  | No       |
 
 **Sample API Calls**
 
