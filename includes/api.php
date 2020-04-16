@@ -21,7 +21,32 @@
 			$request = wp_remote_request( $base_url . $tag . '/members', $mc_params );
 		}
 
-	}
+  }
+  
+  function gmt_mailchimp_wp_rest_api_get_marketing_permissions($base_url, $mc_params) {
+    
+    // If there is no list to check, bail
+    if( empty($mailchimp_list_id) ) return;
+
+    // Update method
+    $mc_params['method'] = 'GET';
+
+    $request = wp_remote_request( $base_url, $mc_params );
+    $response = wp_remote_retrieve_body( $request );
+    $data = json_decode( $response, true );
+
+    $members_nr = count( $data['members'] );
+
+    $dummy_member = NULL;
+
+    if ($members_nr === 0) {
+
+    } else {
+      $dummy_member = $data['members'][0];
+    }
+
+    return false;
+  }
 
 	/**
 	 * Subscriber a user
@@ -88,16 +113,32 @@
 			foreach ( $params['group'] as $key => $group ) {
 				$groups->$key = $join;
 			}
-		}
+    }
+    
+    // Create marketing fields array
+    $marketing_fields = [];
+    if ( !empty( $params['marketing'] ) ) {
+      foreach ( $params['marketing'] as $key => $field ) {
+        array_push(
+          $marketing_fields,
+          array(
+            'marketing_permission_id' => $key,
+            'enabled' => (bool) $field
+          )
+        );
+      }
+    }
 
 		// Create API call
 		$shards = explode( '-', $options['mailchimp_api_key'] );
-		$url = 'https://' . $shards[1] . '.api.mailchimp.com/3.0/lists/' . $options['mailchimp_list_id'] . '/members/' . md5( $params['email'] );
+    $members_url = 'https://' . $shards[1] . '.api.mailchimp.com/3.0/lists/' . $options['mailchimp_list_id'] . '/members/';
+    $url = $members_url . md5( $params['email'] );
 		$tags_url = 'https://' . $shards[1] . '.api.mailchimp.com/3.0/lists/' . $options['mailchimp_list_id'] . '/segments/';
 		$body_params = array(
 			'status' => 'subscribed',
 			'merge_fields' => $merge_fields,
-			'interests' => $groups,
+      'interests' => $groups,
+      'marketing_permissions' => $marketing_fields,
 		);
 		if ( !$params['do-not-create'] ) {
 			$body_params['email_address'] = $params['email'];
@@ -114,7 +155,7 @@
 		// Add or edit the subscriber
 		$request = wp_remote_request( $url, $mc_params );
 		$response = wp_remote_retrieve_body( $request );
-		$data = json_decode( $response, true );
+    $data = json_decode( $response, true );
 
 		// If there was an error
 		if ( array_key_exists( 'status', $data ) && $data['status'] >= 400 ) {
