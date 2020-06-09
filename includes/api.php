@@ -24,6 +24,30 @@
 	}
 
 	/**
+	 * Check if an email address is on the block list
+	 * @param  String $email      The subscriber email
+	 * @param  String $block_list The list of blocked emails
+	 * @return Boolean            If true, email is blocked
+	 */
+	function gmt_mailchimp_wp_rest_api_is_blocked($email, $block_list) {
+
+		// Clean up the email
+		$email_parts = explode('@', $email);
+		$email_no_plus = explode('+', $email_parts[0]);
+		$emails = array(
+			$email_no_plus[0] . '@' . $email_parts[1],
+			str_replace ('.', '', $email_no_plus[0]) . '@' . $email_parts[1],
+		);
+
+		// Convert block list to an array
+		$block_list_arr = explode(',', $email);
+
+		// Check for matches
+		return count(array_intersect($emails, $block_list_arr)) > 0;
+
+	}
+
+	/**
 	 * Subscriber a user
 	 * @param  Object $request The request data
 	 * @return JSON            WP Response Object
@@ -71,6 +95,16 @@
 				'status' => 'failed',
 				'message' => 'Please use a valid email address.'
 			), 400);
+		}
+
+		// If subscriber email is blocked, fail silently (bwhahaha)
+		if (!empty($options['mailchimp_blocked_emails']) && gmt_mailchimp_wp_rest_api_is_blocked($params['email'], $options['mailchimp_blocked_emails'])) {
+			return new WP_REST_Response(array(
+				'code' => 200,
+				'status' => 'success',
+				'message' => 'You\'re now subscribed.'
+			), 200);
+
 		}
 
 		// Create merge fields array

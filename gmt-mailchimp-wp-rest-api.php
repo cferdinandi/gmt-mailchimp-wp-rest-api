@@ -5,7 +5,7 @@
  * Plugin URI: https://github.com/cferdinandi/gmt-mailchimp-wp-rest-api/
  * GitHub Plugin URI: https://github.com/cferdinandi/gmt-mailchimp-wp-rest-api/
  * Description: Add WP Rest API for Mailchimp integration.
- * Version: 1.4.5
+ * Version: 1.5.0
  * Author: Chris Ferdinandi
  * Author URI: http://gomakethings.com
  * License: GPLv3

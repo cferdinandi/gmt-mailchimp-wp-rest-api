@@ -69,6 +69,14 @@
 		<?php
 	}
 
+	function mailchimp_rest_api_settings_field_blocked_emails() {
+		$options = mailchimp_rest_api_get_theme_options();
+		?>
+		<input type="text" name="mailchimp_rest_api_theme_options[mailchimp_blocked_emails]" class="regular-text" id="mailchimp_rest_api_api_blocked_emails" value="<?php echo esc_attr( $options['mailchimp_blocked_emails'] ); ?>" />
+		<label class="description" for="mailchimp_rest_api_api_blocked_emails"><?php _e( 'Blocked emails (optional, comma-separated)', 'mailchimp_rest_api' ); ?></label>
+		<?php
+	}
+
 
 
 	/**
@@ -87,6 +95,7 @@
 			'mailchimp_form_secret' => '',
 			'mailchimp_honeypot' => '',
 			'mailchimp_origin' => '',
+			'mailchimp_blocked_emails' => '',
 		);
 
 		$defaults = apply_filters( 'mailchimp_rest_api_default_theme_options', $defaults );
@@ -118,6 +127,9 @@
 
 		if ( isset( $input['mailchimp_origin'] ) && ! empty( $input['mailchimp_origin'] ) )
 			$output['mailchimp_origin'] = wp_filter_nohtml_kses( str_replace(' ', '', $input['mailchimp_origin']) );
+
+		if ( isset( $input['mailchimp_blocked_emails'] ) && ! empty( $input['mailchimp_blocked_emails'] ) )
+			$output['mailchimp_blocked_emails'] = wp_filter_nohtml_kses( str_replace(' ', '', $input['mailchimp_blocked_emails']) );
 
 		return apply_filters( 'mailchimp_rest_api_theme_options_validate', $output, $input );
 	}
@@ -304,6 +316,7 @@
 		add_settings_field( 'secret', __( 'Form Secret', 'mailchimp_rest_api' ), 'mailchimp_rest_api_settings_field_secret', 'mailchimp_rest_api_options', 'mailchimp_rest_api' );
 		add_settings_field( 'honeypot', __( 'Honeypot', 'mailchimp_rest_api' ), 'mailchimp_rest_api_settings_field_honeypot', 'mailchimp_rest_api_options', 'mailchimp_rest_api' );
 		add_settings_field( 'origin', __( 'Allowed Domains', 'mailchimp_rest_api' ), 'mailchimp_rest_api_settings_field_origin', 'mailchimp_rest_api_options', 'mailchimp_rest_api' );
+		add_settings_field( 'blocked_emails', __( 'Blocked Emails', 'mailchimp_rest_api' ), 'mailchimp_rest_api_settings_field_blocked_emails', 'mailchimp_rest_api_options', 'mailchimp_rest_api' );
 
 	}
 	add_action( 'admin_init', 'mailchimp_rest_api_theme_options_init' );
