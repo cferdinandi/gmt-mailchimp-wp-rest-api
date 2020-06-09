@@ -35,7 +35,7 @@
 		$params = $request->get_params();
 
 		// Check domain whitelist
-		if (!empty($options['origin'])) {
+		if (!empty($options['mailchimp_origin'])) {
 			$origin = $request->get_header('origin');
 			if (empty($origin) || !in_array($origin, explode(',', $options['mailchimp_origin']))) {
 				return new WP_REST_Response(array(
