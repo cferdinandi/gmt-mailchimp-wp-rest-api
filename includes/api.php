@@ -37,7 +37,7 @@
 		// Check domain whitelist
 		if (!empty($options['origin'])) {
 			$origin = $request->get_header('origin');
-			if (empty($origin) || !in_array($origin, explode(',', $options['origin']))) {
+			if (empty($origin) || !in_array($origin, explode(',', $options['mailchimp_origin']))) {
 				return new WP_REST_Response(array(
 					'code' => 400,
 					'status' => 'disallowed_domain',
