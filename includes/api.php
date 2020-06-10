@@ -32,9 +32,11 @@
 	function gmt_mailchimp_wp_rest_api_is_blocked($email, $block_list) {
 
 		// Clean up the email
+		$email = trim($email);
 		$email_parts = explode('@', $email);
 		$email_no_plus = explode('+', $email_parts[0]);
 		$emails = array(
+			$email,
 			$email_no_plus[0] . '@' . $email_parts[1],
 			str_replace ('.', '', $email_no_plus[0]) . '@' . $email_parts[1],
 		);
