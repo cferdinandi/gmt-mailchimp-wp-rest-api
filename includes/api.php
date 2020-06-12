@@ -42,7 +42,7 @@
 		);
 
 		// Convert block list to an array
-		$block_list_arr = explode(',', $email);
+		$block_list_arr = explode(',', $block_list);
 
 		// Check for matches
 		return count(array_intersect($emails, $block_list_arr)) > 0;
@@ -104,7 +104,7 @@
 			return new WP_REST_Response(array(
 				'code' => 200,
 				'status' => 'success',
-				'message' => 'You\'re now subscribed.'
+				'message' => 'Success.'
 			), 200);
 
 		}
