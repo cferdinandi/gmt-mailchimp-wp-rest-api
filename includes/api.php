@@ -50,6 +50,19 @@
 	}
 
 	/**
+	 * Check if email is valid
+	 * https://stackoverflow.com/a/42037557
+	 * @param  String  $email The email to test
+	 * @return boolean        If true, email is valid
+	 */
+	function is_email_valid ($email) {
+		if (empty($email)) return false;
+		$domain = ltrim(stristr($email, '@'), '@');
+		$user = stristr($email, '@', true);
+		return (!empty($user) && !empty($domain) && checkdnsrr($domain));
+	}
+
+	/**
 	 * Subscriber a user
 	 * @param  Object $request The request data
 	 * @return JSON            WP Response Object
@@ -91,7 +104,7 @@
 		}
 
 		// If email is invalid
-		if ( empty( filter_var( $params['email'], FILTER_VALIDATE_EMAIL ) ) ) {
+		if ( empty( is_url_valid( $params['email'] ) ) ) {
 			return new WP_REST_Response(array(
 				'code' => 400,
 				'status' => 'failed',
